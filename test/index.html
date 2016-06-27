@@ -1,0 +1,80 @@
+<html>
+	<head>
+		<script src="../dist/ito.js"></script>
+
+		<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			ito = new Ito(document.getElementById("body"));
+
+			ito.start()
+				.name("start")
+				.then(function(event) { return event.type == "touchstart" && event.touches.length == 1 ? Ito.ACCEPT : Ito.REJECT })
+				.name("touchstart")
+				.fire("touchstart")
+				.then(function(event) {
+					switch(event.type) {
+						case "touchstart":
+							return Ito.REJECT;
+
+						case "touchend":
+							return Ito.ACCEPT;
+
+						case "touchmove":
+							return Ito.WAIT;
+					}
+				})
+				.name("touchend")
+				.fire("touchend")
+				.goto("start");
+
+			ito.start("touchstart")
+				.timeout(1000)
+				.fire("press");
+
+			ito.start("touchstart")
+				.then(function(event, state) {
+					if (event.type == "touchstart" && event.touches.length == 2) {
+						state.secondTouch = event.touches[1].identifier;
+						state.side = event.touches[1].pageX < event.touches[0].pageX ? "left" : "right";
+						return Ito.ACCEPT;
+					}
+					return event.type == "touchmove" ? Ito.WAIT : Ito.REJECT;
+				})
+				.name("twotouch")
+				.then(function(event, state) {
+					if (event.type == "touchend"
+						&& event.touches.length == 1
+						&& event.changedTouches[0].identifier == state.secondTouch) {
+						return Ito.ACCEPT;
+					}
+					return Ito.REJECT;
+				})
+				.name("tab")
+				.fire(function(state) {
+					return "tab" + state.side;
+				})
+				.goto("touchstart");
+
+			ito.listen();
+
+			ito.addEventListener("touchstart", function(){ console.info("touchstart") });
+			ito.addEventListener("touchend", function() { console.info("touchend") });
+			ito.addEventListener("press", function(){ console.info("press") });
+			ito.addEventListener("tableft", function(){ console.info("tableft") });
+			ito.addEventListener("tabright", function(){ console.info("tabright") });
+		});
+		</script>
+
+		<style>
+		html, body {
+			margin: 0px;
+			width: 100%;
+			height: 100%;
+			background: black;
+			color: white;
+			font-family: monospace;
+		}
+		</style>
+	</head>
+	<body id="body"></body>
+</html>

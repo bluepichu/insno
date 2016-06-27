@@ -1,0 +1,23 @@
+{
+  "name": "ito",
+  "homepage": "https://github.com/bluepichu/ito",
+  "authors": [
+    "bluepichu <github@bluepichu.com>"
+  ],
+  "description": "Yet another JS touch library",
+  "main": "",
+  "keywords": [
+    "javascript",
+    "js",
+    "touch"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "node_modules",
+    "bower_components",
+    "test",
+    "serv.js",
+    "tsconfig.json",
+    "tslint.json"
+  ]
+}
