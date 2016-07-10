@@ -51,3 +51,8 @@ declare class GestureNode {
     private advanceTo(node);
     goto(node: GestureNode | string): void;
 }
+declare class Ito extends GestureGraph {
+    static ACCEPT: RecongizerResponse;
+    static REJECT: RecongizerResponse;
+    static WAIT: RecongizerResponse;
+}

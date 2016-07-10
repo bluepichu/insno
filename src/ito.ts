@@ -263,7 +263,8 @@ class GestureNode {
 	}
 }
 
-this.Ito = GestureGraph;
-this.Ito.ACCEPT = ACCEPT;
-this.Ito.REJECT = REJECT;
-this.Ito.WAIT = WAIT;
+class Ito extends GestureGraph {
+	static ACCEPT = ACCEPT;
+	static REJECT = REJECT;
+	static WAIT = WAIT;
+}
