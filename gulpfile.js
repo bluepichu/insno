@@ -2,6 +2,7 @@
 
 let es2015        = require("babel-preset-es2015");
 let gulp          = require("gulp");
+let merge         = require("merge2");
 let path          = require("path");
 let rollup        = require("rollup").rollup;
 let sorcery       = require("sorcery");
@@ -13,16 +14,24 @@ let tsProject = $.typescript.createProject(path.join(__dirname, "tsconfig.json")
 gulp.task("default", ["build", "minify"]);
 
 gulp.task("watch", () => {
-	gulp.watch("src/**/*.*", ["build"])
+	gulp.watch("src/**/*.*", ["default"])
 });
 
-gulp.task("build", () =>
-	gulp.src("src/**/*.ts")
+gulp.task("build", () => {
+	let result = gulp.src("src/**/*.ts")
 	    .pipe($.sourcemaps.init())
-	    .pipe($.typescript(tsProject))
-		.pipe($.babel({ presets: [es2015] }))
-		.pipe($.sourcemaps.write("."))
-	    .pipe(gulp.dest("dist")));
+	    .pipe($.typescript(tsProject));
+
+	return merge([
+		result.js.pipe($.babel({ presets: [es2015] }))
+			.pipe($.sourcemaps.write("."))
+		    .pipe(gulp.dest("dist")),
+		result.dts.pipe(gulp.dest("def"))
+	]);
+});
+
+
+
 
 gulp.task("minify", ["build"], () =>
 	gulp.src("dist/ito.js")
