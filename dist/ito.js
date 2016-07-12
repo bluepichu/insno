@@ -71,10 +71,12 @@ var GestureGraph = function () {
     };
     GestureGraph.prototype.fire = function (events) {
         var _this = this;
-        events.forEach(function (event) {
+        events.forEach(function (_a) {
+            var event = _a[0],
+                arg = _a[1];
             if (event in _this._listeners) {
                 _this._listeners[event].forEach(function (listener) {
-                    listener();
+                    listener(arg);
                 });
             }
         });
@@ -141,17 +143,17 @@ var GestureNode = function () {
     };
     GestureNode.prototype.enter = function () {
         var _this = this;
-        var events = [];
-        this._events.forEach(function (event) {
-            var evts;
+        var events = this._events.map(function (event) {
             if (typeof event === "string") {
-                evts = event;
+                return [event, undefined];
             } else {
-                evts = event(_this._parent.state);
+                var res = event(_this._parent.state);
+                if (Array.isArray(res)) {
+                    return res;
+                } else {
+                    return [res, undefined];
+                }
             }
-            events = events.concat(evts.trim().split(/\s+/g).filter(function (ev) {
-                return ev !== "";
-            }));
         });
         this._parent.fire(events);
         if (this._goto !== undefined) {

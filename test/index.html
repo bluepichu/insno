@@ -8,24 +8,18 @@
 
 			ito.start()
 				.name("start")
-				.then(function(event) { return event.type == "touchstart" && event.touches.length == 1 ? Ito.ACCEPT : Ito.REJECT })
-				.name("touchstart")
-				.fire("touchstart")
-				.then(function(event) {
-					switch(event.type) {
-						case "touchstart":
-							return Ito.REJECT;
-
-						case "touchend":
-							return Ito.ACCEPT;
-
-						case "touchmove":
-							return Ito.WAIT;
+				.then(function(event, state) {
+					if (event.type == "touchstart" && event.touches.length == 1) {
+						state.firstTouchStart = {
+							x: event.touches[0].clientX,
+							y: event.touches[0].clientY
+						}
+						return Ito.ACCEPT;
 					}
+					return Ito.REJECT;
 				})
-				.name("touchend")
-				.fire("touchend")
-				.goto("start");
+				.name("touchstart")
+				.fire("touchstart");
 
 			ito.start("touchstart")
 				.timeout(1000)
@@ -55,6 +49,71 @@
 				})
 				.goto("touchstart");
 
+			ito.start("touchstart")
+				.then(function(event, state) {
+					if (event.touches.length > 1) {
+						return Ito.REJECT;
+					}
+					if (event.type == "touchmove") {
+						var dx = event.touches[0].clientX - state.firstTouchStart.x;
+						var dy = event.touches[0].clientY - state.firstTouchStart.y;
+						if (dx*dx + dy*dy > 100) {
+							state.moveStart = Date.now();
+							return Ito.ACCEPT;
+						}
+					}
+					return Ito.WAIT;
+				})
+				.name("moving")
+				.then(function(event, state) {
+					if (event.touches.length > 1) {
+						return Ito.REJECT;
+					}
+					if (event.type == "touchend") {
+						var dx = event.changedTouches[0].clientX - state.firstTouchStart.x;
+						var dy = event.changedTouches[0].clientY - state.firstTouchStart.y;
+						var dt = Date.now() - state.moveStart;
+
+						if ((dx*dx + dy*dy) / (dt*dt) > 4) {
+							state.firstTouchEnd = {
+								x: event.changedTouches[0].clientX,
+								y: event.changedTouches[0].clientY
+							}
+							return Ito.ACCEPT;
+						}
+						return Ito.REJECT;
+					}
+					return Ito.WAIT;
+				})
+				.name("swipe")
+				.fire(function(state) {
+					var angle = Math.atan2(
+						state.firstTouchEnd.y - state.firstTouchStart.y,
+						state.firstTouchEnd.x - state.firstTouchStart.x);
+
+					angle = (8 - Math.round(angle / (Math.PI / 4))) % 8;
+
+					return ["swipe", angle];
+				})
+				.goto("start");
+
+			ito.start("touchstart")
+				.then(function(event) {
+					switch(event.type) {
+						case "touchstart":
+							return Ito.REJECT;
+
+						case "touchend":
+							return Ito.ACCEPT;
+
+						case "touchmove":
+							return Ito.WAIT;
+					}
+				})
+				.name("touchend")
+				.fire("touchend")
+				.goto("start");
+
 			ito.listen();
 
 			ito.addEventListener("touchstart", function(){ console.info("touchstart") });
@@ -62,6 +121,7 @@
 			ito.addEventListener("press", function(){ console.warn("press") });
 			ito.addEventListener("tableft", function(){ console.warn("tableft") });
 			ito.addEventListener("tabright", function(){ console.warn("tabright") });
+			ito.addEventListener("swipe", function(dir){ console.warn("swipe", dir) });
 		});
 		</script>
 

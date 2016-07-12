@@ -23,7 +23,7 @@ class GestureGraph {
 	private _clearNode: GestureNode;
 	private _startNode: GestureNode;
 	private _currentNode: GestureNode;
-	private _listeners: { [key: string]: (() => void)[] };
+	private _listeners: { [key: string]: ((arg?: any) => void)[] };
 
 	public state: any;
 
@@ -89,11 +89,11 @@ class GestureGraph {
 		this.moveToNode(this._startNode);
 	}
 
-	public fire(events: string[]): void {
-		events.forEach((event) => {
+	public fire(events: [string, any][]): void {
+		events.forEach(([event, arg]) => {
 			if (event in this._listeners) {
 				this._listeners[event].forEach((listener) => {
-					listener();
+					listener(arg);
 				});
 			}
 		});
@@ -129,7 +129,7 @@ class GestureGraph {
 class GestureNode {
 	private _parent: GestureGraph;
 	private _name: string | void;
-	private _events: (string | ((state: any) => string))[];
+	private _events: (string | ((state: any) => string) | ((state: any) => [string, any]))[];
 	private _recognizers: Recognizer[];
 	private _timeout: { time: number, next: GestureNode };
 	private _currentRecognizers: Recognizer[];
@@ -158,7 +158,7 @@ class GestureNode {
 		return this;
 	}
 
-	public fire(evt: string | ((state: any) => string)): GestureNode {
+	public fire(evt: string | ((state: any) => string) | ((state: any) => [string, any])): GestureNode {
 		this._events.push(evt);
 
 		return this;
@@ -187,18 +187,18 @@ class GestureNode {
 	}
 
 	public enter(): void {
-		let events: string[] = [];
-
-		this._events.forEach((event) => {
-			let evts: string;
-
+		let events: [string, any][] = this._events.map((event) => {
 			if (typeof event === "string") {
-				evts = event;
+				return [event, undefined] as [string, any];
 			} else {
-				evts = event(this._parent.state);
-			}
+				let res = event(this._parent.state);
 
-			events = events.concat(evts.trim().split(/\s+/g).filter((ev) => ev !== ""));
+				if (Array.isArray(res)) {
+					return res as [string, any];
+				} else {
+					return [res, undefined] as [string, any];
+				}
+			}
 		});
 
 		this._parent.fire(events);

@@ -26,7 +26,7 @@ declare class GestureGraph {
     moveToNode(node: GestureNode | string): void;
     private getNode(node);
     reset(): void;
-    fire(events: string[]): void;
+    fire(events: [string, any][]): void;
     addEventListener(event: string, listener: () => void): void;
     listen(): void;
     wait(): void;
@@ -42,7 +42,7 @@ declare class GestureNode {
     private _goto;
     constructor(parent: GestureGraph);
     name(name: string): GestureNode;
-    fire(evt: string | ((state: any) => string)): GestureNode;
+    fire(evt: string | ((state: any) => string) | ((state: any) => [string, any])): GestureNode;
     then(matcher: RecognizerMatcher): GestureNode;
     timeout(time: number): GestureNode;
     enter(): void;
